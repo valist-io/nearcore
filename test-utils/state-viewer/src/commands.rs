@@ -122,7 +122,7 @@ pub(crate) fn dump_code(
         let shard_uid = runtime.shard_id_to_uid(shard_id as u64, epoch_id).unwrap();
         if let Ok(contract_code) = runtime.view_contract_code(
             &shard_uid,
-            CryptoHash::try_from(state_root_vec).unwrap(),
+            CryptoHash::try_from(state_root_vec.as_slice()).unwrap(),
             &account_id.parse().unwrap(),
         ) {
             let mut file = File::create(output).unwrap();
