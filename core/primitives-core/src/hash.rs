@@ -69,6 +69,7 @@ impl<'de> Deserialize<'de> for CryptoHash {
         if s.len() > std::mem::size_of::<CryptoHash>() * 2 {
             return Err(serde::de::Error::custom("incorrect length for hash"));
         }
+        // TODO: Alloc can be avoided
         from_base(&s)
             .and_then(|f| CryptoHash::try_from(f.as_slice()))
             .map_err(|err| serde::de::Error::custom(err.to_string()))
