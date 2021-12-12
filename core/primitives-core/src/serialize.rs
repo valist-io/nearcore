@@ -113,7 +113,6 @@ pub mod base_bytes_format {
         D: Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        // TODO: Alloc can be avoided
         from_base(&s).map_err(|err| de::Error::custom(err.to_string()))
     }
 }

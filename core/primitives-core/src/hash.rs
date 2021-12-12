@@ -69,7 +69,6 @@ impl<'de> Deserialize<'de> for CryptoHash {
         if s.len() > std::mem::size_of::<CryptoHash>() * 2 {
             return Err(serde::de::Error::custom("incorrect length for hash"));
         }
-        // TODO: Alloc can be avoided
         from_base(&s)
             .and_then(|f| CryptoHash::try_from(f.as_slice()))
             .map_err(|err| serde::de::Error::custom(err.to_string()))
@@ -89,12 +88,7 @@ impl TryFrom<&[u8]> for CryptoHash {
     type Error = Box<dyn std::error::Error>;
 
     fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
-        if bytes.len() != 32 {
-            return Err("incorrect length for hash".into());
-        }
-        let mut buf = [0; 32];
-        buf.copy_from_slice(bytes);
-        Ok(CryptoHash(buf))
+        Ok(CryptoHash(bytes.try_into()?))
     }
 }
 

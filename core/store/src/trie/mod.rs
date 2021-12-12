@@ -374,7 +374,7 @@ impl RawTrieNode {
                 cursor.read_exact(&mut key)?;
                 let mut child = [0; 32];
                 cursor.read_exact(&mut child)?;
-                Ok(RawTrieNode::Extension(key, CryptoHash::try_from(&child[..]).unwrap()))
+                Ok(RawTrieNode::Extension(key, CryptoHash(child)))
             }
             _ => Err(std::io::Error::new(std::io::ErrorKind::Other, "Wrong type")),
         }
