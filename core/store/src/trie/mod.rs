@@ -353,7 +353,7 @@ impl RawTrieNode {
                 let value_length = cursor.read_u32::<LittleEndian>()?;
                 let mut arr = [0; 32];
                 cursor.read_exact(&mut arr)?;
-                let value_hash = CryptoHash::try_from(&arr[..]).unwrap();
+                let value_hash = CryptoHash(arr);
                 Ok(RawTrieNode::Leaf(key, value_length, value_hash))
             }
             BRANCH_NODE_NO_VALUE => {
@@ -364,7 +364,7 @@ impl RawTrieNode {
                 let value_length = cursor.read_u32::<LittleEndian>()?;
                 let mut arr = [0; 32];
                 cursor.read_exact(&mut arr)?;
-                let value_hash = CryptoHash::try_from(&arr[..]).unwrap();
+                let value_hash = CryptoHash(arr);
                 let children = decode_children(&mut cursor)?;
                 Ok(RawTrieNode::Branch(children, Some((value_length, value_hash))))
             }
