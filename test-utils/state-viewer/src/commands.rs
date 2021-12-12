@@ -119,7 +119,7 @@ pub(crate) fn dump_code(
     for (shard_id, state_root) in state_roots.iter().enumerate() {
         let shard_uid = runtime.shard_id_to_uid(shard_id as u64, epoch_id).unwrap();
         if let Ok(contract_code) =
-            runtime.view_contract_code(&shard_uid, state_root.clone(), &account_id.parse().unwrap())
+            runtime.view_contract_code(&shard_uid, *state_root, &account_id.parse().unwrap())
         {
             let mut file = File::create(output).unwrap();
             file.write_all(contract_code.code()).unwrap();
