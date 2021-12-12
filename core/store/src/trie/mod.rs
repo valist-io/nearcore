@@ -372,9 +372,9 @@ impl RawTrieNode {
                 let key_length = cursor.read_u32::<LittleEndian>()?;
                 let mut key = vec![0; key_length as usize];
                 cursor.read_exact(&mut key)?;
-                let mut child = vec![0; 32];
+                let mut child = [0; 32];
                 cursor.read_exact(&mut child)?;
-                Ok(RawTrieNode::Extension(key, CryptoHash::try_from(child.as_slice()).unwrap()))
+                Ok(RawTrieNode::Extension(key, CryptoHash::try_from(&child[..]).unwrap()))
             }
             _ => Err(std::io::Error::new(std::io::ErrorKind::Other, "Wrong type")),
         }

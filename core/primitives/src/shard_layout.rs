@@ -325,7 +325,7 @@ pub fn get_block_shard_uid_rev(
             std::io::Error::new(std::io::ErrorKind::InvalidInput, "Invalid key length").into()
         );
     }
-    let block_hash = CryptoHash::try_from(&key[0..32])?;
+    let block_hash = CryptoHash::try_from(&key[..32])?;
     let shard_id = ShardUId::try_from(&key[32..])?;
     Ok((block_hash, shard_id))
 }
