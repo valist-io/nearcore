@@ -918,9 +918,9 @@ mod tests {
         let runtime_config = near_primitives::runtime::config::RuntimeConfig::test();
         let block_hash = near_primitives::hash::CryptoHash::default();
         let nfvalidator1_receipt_processing_hash =
-            near_primitives::hash::CryptoHash::try_from(&[1u8; 32][0..32]).unwrap();
+            near_primitives::hash::CryptoHash::try_from(&[1u8; 32][..]).unwrap();
         let nfvalidator2_action_receipt_gas_reward_hash =
-            near_primitives::hash::CryptoHash::try_from(&[2u8; 32][0..32]).unwrap();
+            near_primitives::hash::CryptoHash::try_from(&[2u8; 32][..]).unwrap();
         let accounts_changes = vec![
             near_primitives::views::StateChangeWithCauseView {
                 cause: near_primitives::views::StateChangeCauseView::ValidatorAccountsUpdate,
