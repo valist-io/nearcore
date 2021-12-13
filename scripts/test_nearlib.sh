@@ -6,6 +6,9 @@ repo_dir=$(realpath -e "$(dirname "${BASH_SOURCE[0]}")/..")
 # Builds and starts `neard`, assumes it's running in ${repo_dir}'
 # May fail silently, leading to hard to debug CI failures
 # TODO: add option to build only and run checks, this will allow us to see those errors synchronously.
+
+pkill neard || echo "Nothing to kill"
+
 (cd "${repo_dir}"; RUST_BACKTRACE=full "${repo_dir}"/scripts/start_unittest.py --local) &
 export NEAR_PID=$!
 trap 'pkill -15 -P $NEAR_PID' 0
