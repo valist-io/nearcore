@@ -23,6 +23,11 @@ export HOME="{$repo_dir}"/testdir
 
 # Run near-api-js tests
 yarn --version
+if [[ $(yarn --version) == "0."* ]]; then
+  echo "You version of yarn is too old $(yarn --version) < 1.0"
+  exit 1
+fi
+
 (cd "${repo_dir}"/near-api-js; yarn)
 (cd "${repo_dir}"/near-api-js; yarn build)
 "${repo_dir}"/scripts/waitonserver.sh
