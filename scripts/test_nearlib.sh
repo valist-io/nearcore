@@ -26,6 +26,8 @@ export HOME="{$repo_dir}"/testdir
 
 # Run near-api-js tests
 pushd "${repo_dir}/near-api-js"
+
+# TODO(CREATE ISSUE) We should add a new file with all requirement checks.
 if [[ $(yarn --version) != "1."* ]]; then
   echo "You version of yarn is too old $(yarn --version) < 1.0"
   echo "Install with npm install --global yarn"
