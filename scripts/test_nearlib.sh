@@ -25,14 +25,18 @@ export NODE_ENV=local
 export HOME="{$repo_dir}"/testdir
 
 # Run near-api-js tests
+pushd "${repo_dir}/near-api-js"
 if [[ $(yarn --version) != "1."* ]]; then
   echo "You version of yarn is too old $(yarn --version) < 1.0"
   echo "Install with npm install --global yarn"
   exit 1
 fi
 
-(cd "${repo_dir}"/near-api-js; yarn)
-(cd "${repo_dir}"/near-api-js; yarn build)
+yarn
+yarn build
+yarn list
+popd
+
 "${repo_dir}"/scripts/waitonserver.sh
 
 # TODO(#5757) Disabling yarn test for now
