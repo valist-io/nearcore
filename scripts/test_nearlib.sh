@@ -22,9 +22,7 @@ export NODE_ENV=local
 export HOME="{$repo_dir}"/testdir
 
 # Run near-api-js tests
-yarn --version
-err=$!
-if [[ $err != "0" || $(yarn --version) == "0."* ]]; then
+if [[ $(yarn --version) != "1."* ]]; then
   echo "You version of yarn is too old $(yarn --version) < 1.0"
   echo "Install with npm install --global yarn"
   exit 1
