@@ -22,6 +22,7 @@ export NODE_ENV=local
 export HOME="{$repo_dir}"/testdir
 
 # Run near-api-js tests
+yarn --version
 (cd "${repo_dir}"/near-api-js; yarn)
 (cd "${repo_dir}"/near-api-js; yarn build)
 "${repo_dir}"/scripts/waitonserver.sh
