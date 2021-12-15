@@ -73,6 +73,10 @@ const EDGE_NONCE_BUMP_ALLOWED: u64 = 1_000;
 /// Ratio between consecutive attempts to establish connection with another peer.
 /// In the kth step node should wait `10 * EXPONENTIAL_BACKOFF_RATIO**k` milliseconds
 const EXPONENTIAL_BACKOFF_RATIO: f64 = 1.1;
+/// The maximum waiting time between consecutive attempts to establish connection
+const MONITOR_PEERS_MAX_DURATION: Duration = Duration::from_millis(60_000);
+/// The initial waiting time between consecutive attempts to establish connection
+const MONITOR_PEERS_INITIAL_DURATION: Duration = Duration::from_millis(10);
 /// Limit number of pending Peer actors to avoid OOM.
 const LIMIT_PENDING_PEERS: usize = 60;
 /// How ofter should we broadcast edges.
@@ -1575,9 +1579,9 @@ impl Actor for PeerManagerActor {
         debug!(target: "network", message = "monitor_peers_trigger", interval = ?self.config.bootstrap_peers_period);
         self.monitor_peers_trigger(
             ctx,
-            Duration::from_millis(10),
-            Duration::from_millis(10),
-            Duration::min(Duration::from_secs(60), self.config.bootstrap_peers_period),
+            MONITOR_PEERS_INITIAL_DURATION,
+            MONITOR_PEERS_INITIAL_DURATION,
+            Duration::min(MONITOR_PEERS_MAX_DURATION, self.config.bootstrap_peers_period),
         );
 
         // Periodically starts active peer stats querying.
