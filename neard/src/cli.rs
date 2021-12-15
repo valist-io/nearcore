@@ -1,5 +1,5 @@
 use super::{DEFAULT_HOME, NEARD_VERSION, NEARD_VERSION_STRING, PROTOCOL_VERSION};
-use anyhow::{Context, Result};
+use anyhow::Context;
 use clap::{AppSettings, Clap};
 use futures::future::FutureExt;
 use near_primitives::types::{Gas, NumSeats, NumShards};
@@ -27,7 +27,7 @@ pub(super) struct NeardCmd {
 }
 
 impl NeardCmd {
-    pub(super) fn parse_and_run() -> Result<()> {
+    pub(super) fn parse_and_run() -> anyhow::Result<()> {
         let neard_cmd = Self::parse();
         neard_cmd.opts.init();
         info!(target: "neard", "Version: {}, Build: {}, Latest Protocol: {}", NEARD_VERSION.version, NEARD_VERSION.build, PROTOCOL_VERSION);
@@ -156,7 +156,7 @@ pub(super) struct InitCmd {
 }
 
 impl InitCmd {
-    pub(super) fn run(self, home_dir: &Path) -> Result<()> {
+    pub(super) fn run(self, home_dir: &Path) -> anyhow::Result<()> {
         // TODO: Check if `home` exists. If exists check what networks we already have there.
         if (self.download_genesis || self.download_genesis_url.is_some()) && self.genesis.is_some()
         {

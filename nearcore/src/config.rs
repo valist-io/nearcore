@@ -5,7 +5,7 @@ use std::path::Path;
 use std::sync::Arc;
 use std::time::Duration;
 
-use anyhow::{bail, Result};
+use anyhow::bail;
 use hyper::body::HttpBody;
 use near_primitives::time::Clock;
 use num_rational::Rational;
@@ -817,7 +817,7 @@ pub fn init_configs(
     download_config_url: Option<&str>,
     boot_nodes: Option<&str>,
     max_gas_burnt_view: Option<Gas>,
-) -> Result<()> {
+) -> anyhow::Result<()> {
     fs::create_dir_all(dir).expect("Failed to create directory");
     // Check if config already exists in home dir.
     if dir.join(CONFIG_FILENAME).exists() {
