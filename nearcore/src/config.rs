@@ -5,6 +5,7 @@ use std::path::Path;
 use std::sync::Arc;
 use std::time::Duration;
 
+use anyhow::{bail, Result};
 use hyper::body::HttpBody;
 use near_primitives::time::Clock;
 use num_rational::Rational;
@@ -816,13 +817,13 @@ pub fn init_configs(
     download_config_url: Option<&str>,
     boot_nodes: Option<&str>,
     max_gas_burnt_view: Option<Gas>,
-) {
+) -> Result<()> {
     fs::create_dir_all(dir).expect("Failed to create directory");
     // Check if config already exists in home dir.
     if dir.join(CONFIG_FILENAME).exists() {
         let config = Config::from_file(&dir.join(CONFIG_FILENAME));
         let genesis_config = GenesisConfig::from_file(&dir.join(config.genesis_file));
-        panic!("Found existing config in {} with chain-id = {}. Use unsafe_reset_all to clear the folder.", dir.display(), genesis_config.chain_id);
+        bail!("Found existing config in {} with chain-id = {}\n. Use `neard unsafe_reset_all` to clear the folder.", dir.display(), genesis_config.chain_id);
     }
 
     let mut config = Config::default();
@@ -978,6 +979,7 @@ pub fn init_configs(
             info!(target: "near", "Generated node key, validator key, genesis file in {}", dir.display());
         }
     }
+    Ok(())
 }
 
 pub fn create_testnet_configs_from_seeds(

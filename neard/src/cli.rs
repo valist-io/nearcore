@@ -1,4 +1,5 @@
 use super::{DEFAULT_HOME, NEARD_VERSION, NEARD_VERSION_STRING, PROTOCOL_VERSION};
+use anyhow::{Context, Result};
 use clap::{AppSettings, Clap};
 use futures::future::FutureExt;
 use near_primitives::types::{Gas, NumSeats, NumShards};
@@ -26,7 +27,7 @@ pub(super) struct NeardCmd {
 }
 
 impl NeardCmd {
-    pub(super) fn parse_and_run() {
+    pub(super) fn parse_and_run() -> Result<()> {
         let neard_cmd = Self::parse();
         neard_cmd.opts.init();
         info!(target: "neard", "Version: {}, Build: {}, Latest Protocol: {}", NEARD_VERSION.version, NEARD_VERSION.build, PROTOCOL_VERSION);
@@ -45,7 +46,10 @@ impl NeardCmd {
         let home_dir = neard_cmd.opts.home;
 
         match neard_cmd.subcmd {
-            NeardSubCommand::Init(cmd) => cmd.run(&home_dir),
+            NeardSubCommand::Init(cmd) => cmd
+                .clone()
+                .run(&home_dir)
+                .with_context(|| format!("Init command failed {:?}", cmd))?,
             NeardSubCommand::Testnet(cmd) => cmd.run(&home_dir),
             NeardSubCommand::Run(cmd) => cmd.run(&home_dir),
 
@@ -62,6 +66,7 @@ impl NeardCmd {
                 cmd.run(&home_dir);
             }
         }
+        Ok(())
     }
 }
 
@@ -107,7 +112,7 @@ pub(super) enum NeardSubCommand {
     StateViewer(StateViewerSubCommand),
 }
 
-#[derive(Clap)]
+#[derive(Clap, Debug, Clone)]
 pub(super) struct InitCmd {
     /// Download the verified NEAR genesis file automatically.
     #[clap(long)]
@@ -150,7 +155,7 @@ pub(super) struct InitCmd {
 }
 
 impl InitCmd {
-    pub(super) fn run(self, home_dir: &Path) {
+    pub(super) fn run(self, home_dir: &Path) -> Result<()> {
         // TODO: Check if `home` exists. If exists check what networks we already have there.
         if (self.download_genesis || self.download_genesis_url.is_some()) && self.genesis.is_some()
         {
@@ -173,7 +178,8 @@ impl InitCmd {
             self.download_config_url.as_deref(),
             self.boot_nodes.as_deref(),
             self.max_gas_burnt_view,
-        );
+        )
+        .with_context(|| "nearcore::init_configs")
     }
 }
 
