@@ -45,6 +45,7 @@ impl NeardCmd {
 
         let home_dir = neard_cmd.opts.home;
 
+        info!(message = "Cmd", ?neard_cmd.subcmd);
         match neard_cmd.subcmd {
             NeardSubCommand::Init(cmd) => cmd
                 .clone()
@@ -87,7 +88,7 @@ impl NeardOpts {
     }
 }
 
-#[derive(Clap)]
+#[derive(Clap, Debug)]
 pub(super) enum NeardSubCommand {
     /// Initializes NEAR configuration
     #[clap(name = "init")]
@@ -228,7 +229,6 @@ pub(super) struct RunCmd {
 
 impl RunCmd {
     pub(super) fn run(self, home_dir: &Path) {
-        info!(message = "Run", ?self);
         // Load configs from home.
         let mut near_config = nearcore::config::load_config_without_genesis_records(home_dir);
         // Set current version in client config.
@@ -317,7 +317,7 @@ impl RunCmd {
     }
 }
 
-#[derive(Clap)]
+#[derive(Clap, Debug)]
 pub(super) struct TestnetCmd {
     /// Number of non-validators to initialize the testnet with.
     #[clap(long = "n", default_value = "0")]
