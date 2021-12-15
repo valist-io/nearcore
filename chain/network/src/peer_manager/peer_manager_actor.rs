@@ -48,8 +48,7 @@ use near_rate_limiter::{
 use near_store::Store;
 use rand::seq::{IteratorRandom, SliceRandom};
 use rand::thread_rng;
-use std::cmp;
-use std::cmp::max;
+use std::cmp::{max, min};
 use std::collections::{HashMap, HashSet};
 use std::net::SocketAddr;
 use std::pin::Pin;
@@ -74,14 +73,6 @@ const EDGE_NONCE_BUMP_ALLOWED: u64 = 1_000;
 /// Ratio between consecutive attempts to establish connection with another peer.
 /// In the kth step node should wait `10 * EXPONENTIAL_BACKOFF_RATIO**k` milliseconds
 const EXPONENTIAL_BACKOFF_RATIO: f64 = 1.1;
-/// The maximum waiting time between consecutive attempts to establish connection
-/// with another peer is 60 seconds. This is the minimum exponent after such threshold
-/// is less than the exponential backoff.
-///
-/// 10 * EXPONENTIAL_BACKOFF_RATIO**EXPONENTIAL_BACKOFF_LIMIT > 60000
-///
-/// EXPONENTIAL_BACKOFF_LIMIT = math.log(60000 / 10, EXPONENTIAL_BACKOFF_RATIO)
-const EXPONENTIAL_BACKOFF_LIMIT: u64 = 91;
 /// Limit number of pending Peer actors to avoid OOM.
 const LIMIT_PENDING_PEERS: usize = 60;
 /// How ofter should we broadcast edges.
@@ -161,7 +152,7 @@ pub struct PeerManagerActor {
     /// Flag that track whether we started attempts to establish outbound connections.
     started_connect_attempts: bool,
     /// Monitor peers attempts, used for fast checking in the beginning with exponential backoff.
-    monitor_peers_attempts: u64,
+    monitor_peers_wait: Duration,
     /// Connected peers we have sent new edge update, but we haven't received response so far.
     local_peer_pending_update_nonce_request: HashMap<PeerId, u64>,
     /// Dynamic Prometheus metrics
@@ -242,7 +233,7 @@ impl PeerManagerActor {
             outgoing_peers: HashSet::default(),
             routing_table_view: routing_table,
             routing_table_exchange_helper: Default::default(),
-            monitor_peers_attempts: 0,
+            monitor_peers_wait: Duration::from_millis(10),
             started_connect_attempts: false,
             local_peer_pending_update_nonce_request: HashMap::new(),
             network_metrics: NetworkMetrics::new(),
@@ -1198,7 +1189,7 @@ impl PeerManagerActor {
                 // Start monitor_peers_attempts from start after we discover the first healthy peer
                 if !self.started_connect_attempts {
                     self.started_connect_attempts = true;
-                    self.monitor_peers_attempts = 0;
+                    self.monitor_peers_wait = Duration::from_millis(10);
                 }
 
                 self.outgoing_peers.insert(peer_info.id.clone());
@@ -1220,22 +1211,21 @@ impl PeerManagerActor {
             "Failed to remove expired peers"
         );
 
-        // Reschedule the bootstrap peer task, starting of as quick as possible with exponential backoff.
-        let wait = if self.monitor_peers_attempts >= EXPONENTIAL_BACKOFF_LIMIT {
-            // This is expected to be 60 seconds
-            max_interval
-        } else {
-            Duration::from_millis(
-                (10f64 * EXPONENTIAL_BACKOFF_RATIO.powf(self.monitor_peers_attempts as f64)) as u64,
-            )
-        };
+        near_performance_metrics::actix::run_later(
+            ctx,
+            self.monitor_peers_wait,
+            move |act, ctx| {
+                act.monitor_peers_trigger(ctx, max_interval);
+            },
+        );
 
-        self.monitor_peers_attempts =
-            cmp::min(EXPONENTIAL_BACKOFF_LIMIT, self.monitor_peers_attempts + 1);
-
-        near_performance_metrics::actix::run_later(ctx, wait, move |act, ctx| {
-            act.monitor_peers_trigger(ctx, max_interval);
-        });
+        // Compute waiting time, not greater than `60`s by default
+        self.monitor_peers_wait = min(
+            max_interval,
+            Duration::from_nanos(
+                (self.monitor_peers_wait.as_nanos() as f64 * EXPONENTIAL_BACKOFF_RATIO) as u64,
+            ),
+        );
     }
 
     /// Sends list of edges, from peer `peer_id` to check their signatures to `EdgeValidatorActor`.
@@ -1587,7 +1577,10 @@ impl Actor for PeerManagerActor {
 
         // Periodically starts peer monitoring.
         debug!(target: "network", message = "monitor_peers_trigger", interval = ?self.config.bootstrap_peers_period);
-        self.monitor_peers_trigger(ctx, self.config.bootstrap_peers_period);
+        self.monitor_peers_trigger(
+            ctx,
+            Duration::min(Duration::from_secs(60), self.config.bootstrap_peers_period),
+        );
 
         // Periodically starts active peer stats querying.
         self.monitor_peer_stats_trigger(ctx, self.config.peer_stats_period);
