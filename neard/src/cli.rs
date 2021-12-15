@@ -288,6 +288,7 @@ impl RunCmd {
             }
         }
 
+        info!("Creating system");
         let sys = actix::System::new();
         sys.block_on(async move {
             let nearcore::NearNode { rpc_servers, .. } =

@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::{Read, Write};
 use std::path::Path;
 use std::sync::Arc;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use anyhow::bail;
 use hyper::body::HttpBody;
@@ -1213,7 +1213,10 @@ impl From<NodeKeyFile> for KeyFile {
 
 pub fn load_config_without_genesis_records(dir: &Path) -> NearConfig {
     let config = Config::from_file(&dir.join(CONFIG_FILENAME));
+    info!(message = "Loading genesis started");
+    let started = Instant::now();
     let genesis_config = GenesisConfig::from_file(&dir.join(&config.genesis_file));
+    info!(message = "Loading genesis done", took = started.elapsed());
     let genesis_records_file = if let Some(genesis_records_file) = &config.genesis_records_file {
         dir.join(genesis_records_file)
     } else {
