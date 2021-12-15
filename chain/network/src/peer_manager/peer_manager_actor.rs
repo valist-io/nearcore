@@ -1216,7 +1216,7 @@ impl PeerManagerActor {
 
         let new_interval = min(
             max_interval,
-            Duration::from_nanos((interval.as_nanos() as f64 * EXPONENTIAL_BACKOFF_RATIO) as u128),
+            Duration::from_nanos((interval.as_nanos() as f64 * EXPONENTIAL_BACKOFF_RATIO) as u64),
         );
 
         near_performance_metrics::actix::run_later(ctx, interval, move |act, ctx| {
