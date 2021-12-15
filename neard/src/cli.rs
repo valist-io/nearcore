@@ -183,7 +183,7 @@ impl InitCmd {
     }
 }
 
-#[derive(Clap)]
+#[derive(Clap, Debug)]
 pub(super) struct RunCmd {
     /// Keep old blocks in the storage (default false).
     #[clap(long)]
@@ -228,6 +228,7 @@ pub(super) struct RunCmd {
 
 impl RunCmd {
     pub(super) fn run(self, home_dir: &Path) {
+        info!(message = "Run", ?self);
         // Load configs from home.
         let mut near_config = nearcore::config::load_config_without_genesis_records(home_dir);
         // Set current version in client config.
