@@ -151,8 +151,6 @@ pub struct PeerManagerActor {
     routing_table_exchange_helper: EdgeValidatorHelper,
     /// Flag that track whether we started attempts to establish outbound connections.
     started_connect_attempts: bool,
-    /// Monitor peers attempts, used for fast checking in the beginning with exponential backoff.
-    monitor_peers_wait: Duration,
     /// Connected peers we have sent new edge update, but we haven't received response so far.
     local_peer_pending_update_nonce_request: HashMap<PeerId, u64>,
     /// Dynamic Prometheus metrics
@@ -233,7 +231,6 @@ impl PeerManagerActor {
             outgoing_peers: HashSet::default(),
             routing_table_view: routing_table,
             routing_table_exchange_helper: Default::default(),
-            monitor_peers_wait: Duration::from_millis(10),
             started_connect_attempts: false,
             local_peer_pending_update_nonce_request: HashMap::new(),
             network_metrics: NetworkMetrics::new(),
@@ -1159,7 +1156,13 @@ impl PeerManagerActor {
     ///  - bootstrap outbound connections from known peers,
     ///  - unban peers that have been banned for awhile,
     ///  - remove expired peers,
-    fn monitor_peers_trigger(&mut self, ctx: &mut Context<Self>, max_interval: Duration) {
+    fn monitor_peers_trigger(
+        &mut self,
+        ctx: &mut Context<Self>,
+        mut interval: Duration,
+        default_interval: Duration,
+        max_interval: Duration,
+    ) {
         let mut to_unban = vec![];
         for (peer_id, peer_state) in self.peer_store.iter() {
             if let KnownPeerStatus::Banned(_, last_banned) = peer_state.status {
@@ -1189,7 +1192,7 @@ impl PeerManagerActor {
                 // Start monitor_peers_attempts from start after we discover the first healthy peer
                 if !self.started_connect_attempts {
                     self.started_connect_attempts = true;
-                    self.monitor_peers_wait = Duration::from_millis(10);
+                    interval = default_interval;
                 }
 
                 self.outgoing_peers.insert(peer_info.id.clone());
@@ -1211,21 +1214,14 @@ impl PeerManagerActor {
             "Failed to remove expired peers"
         );
 
-        near_performance_metrics::actix::run_later(
-            ctx,
-            self.monitor_peers_wait,
-            move |act, ctx| {
-                act.monitor_peers_trigger(ctx, max_interval);
-            },
+        let new_interval = min(
+            max_interval,
+            Duration::from_nanos((interval.as_nanos() as f64 * EXPONENTIAL_BACKOFF_RATIO) as u64),
         );
 
-        // Compute waiting time, not greater than `60`s by default
-        self.monitor_peers_wait = min(
-            max_interval,
-            Duration::from_nanos(
-                (self.monitor_peers_wait.as_nanos() as f64 * EXPONENTIAL_BACKOFF_RATIO) as u64,
-            ),
-        );
+        near_performance_metrics::actix::run_later(ctx, interval, move |act, ctx| {
+            act.monitor_peers_trigger(ctx, new_interval, default_interval, max_interval);
+        });
     }
 
     /// Sends list of edges, from peer `peer_id` to check their signatures to `EdgeValidatorActor`.
@@ -1579,6 +1575,8 @@ impl Actor for PeerManagerActor {
         debug!(target: "network", message = "monitor_peers_trigger", interval = ?self.config.bootstrap_peers_period);
         self.monitor_peers_trigger(
             ctx,
+            Duration::from_millis(10),
+            Duration::from_millis(10),
             Duration::min(Duration::from_secs(60), self.config.bootstrap_peers_period),
         );
 
