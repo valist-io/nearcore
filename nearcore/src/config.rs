@@ -822,8 +822,18 @@ pub fn init_configs(
     // Check if config already exists in home dir.
     if dir.join(CONFIG_FILENAME).exists() {
         let config = Config::from_file(&dir.join(CONFIG_FILENAME));
-        let genesis_config = GenesisConfig::from_file(&dir.join(config.genesis_file));
-        bail!("Found existing config in {} with chain-id = {}\n. Use `neard unsafe_reset_all` to clear the folder.", dir.display(), genesis_config.chain_id);
+        let path = &dir.join(config.genesis_file);
+        let genesis_config = GenesisConfig::from_file(path);
+        bail!(
+            "Can't create new config, it already exists.
+             Use `neard unsafe_reset_all` to delete it.
+             folder = {:?}
+             chain_id = {:?}
+             path = {:?}",
+            dir.display(),
+            genesis_config.chain_id,
+            path
+        );
     }
 
     let mut config = Config::default();
