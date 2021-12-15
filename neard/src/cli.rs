@@ -16,7 +16,7 @@ use tracing::metadata::LevelFilter;
 use tracing_subscriber::EnvFilter;
 
 /// NEAR Protocol Node
-#[derive(Clap)]
+#[derive(Clap, Debug)]
 #[clap(version = NEARD_VERSION_STRING.as_str())]
 #[clap(setting = AppSettings::SubcommandRequiredElseHelp)]
 pub(super) struct NeardCmd {
@@ -43,9 +43,9 @@ impl NeardCmd {
             }
         }
 
+        info!(message = "Cmd", ?neard_cmd);
         let home_dir = neard_cmd.opts.home;
 
-        info!(message = "Cmd", ?neard_cmd.subcmd);
         match neard_cmd.subcmd {
             NeardSubCommand::Init(cmd) => cmd
                 .clone()
