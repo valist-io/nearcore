@@ -1216,7 +1216,7 @@ pub fn load_config_without_genesis_records(dir: &Path) -> NearConfig {
     info!(message = "Loading genesis started");
     let started = Instant::now();
     let genesis_config = GenesisConfig::from_file(&dir.join(&config.genesis_file));
-    info!(message = "Loading genesis done", took = started.elapsed());
+    info!(message = "Loading genesis done", took = ?started.elapsed());
     let genesis_records_file = if let Some(genesis_records_file) = &config.genesis_records_file {
         dir.join(genesis_records_file)
     } else {
