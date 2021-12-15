@@ -247,4 +247,18 @@ mod tests {
             tree.insert(cur_hash);
         }
     }
+
+    #[test]
+    fn test_combine_hash_stability() {
+        let a = MerkleHash::default();
+        let b = MerkleHash::default();
+        let cc = combine_hash(&a, &b);
+        assert_eq!(
+            cc.0,
+            [
+                245, 165, 253, 66, 209, 106, 32, 48, 39, 152, 239, 110, 211, 9, 151, 155, 67, 0,
+                61, 35, 32, 217, 240, 232, 234, 152, 49, 169, 39, 89, 251, 75
+            ]
+        );
+    }
 }

@@ -17,9 +17,7 @@ use near_primitives::syncing::{
 };
 use near_primitives::time::{Clock, Utc};
 use near_primitives::transaction::{ExecutionOutcomeWithIdAndProof, SignedTransaction};
-use near_primitives::types::{
-    AccountId, BlockHeight, BlockReference, EpochId, MerkleHash, ShardId,
-};
+use near_primitives::types::{AccountId, BlockHeight, BlockReference, EpochId, ShardId};
 use near_primitives::utils::{from_timestamp, to_timestamp};
 use near_primitives::views::{FinalExecutionOutcomeView, QueryRequest, QueryResponse};
 use std::collections::{HashMap, HashSet};
@@ -1050,20 +1048,6 @@ mod tests {
             }
             assert!(struct_size <= ALLOWED_SIZE);
         };
-    }
-
-    #[test]
-    fn test_combine_hash_stability() {
-        let a = MerkleHash::default();
-        let b = MerkleHash::default();
-        let cc = combine_hash(&a, &b);
-        assert_eq!(
-            cc.0,
-            [
-                245, 165, 253, 66, 209, 106, 32, 48, 39, 152, 239, 110, 211, 9, 151, 155, 67, 0,
-                61, 35, 32, 217, 240, 232, 234, 152, 49, 169, 39, 89, 251, 75
-            ]
-        );
     }
 
     #[test]
