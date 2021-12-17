@@ -170,7 +170,7 @@ impl RuntimeUser {
         }];
         for hash in &receipt_ids {
             transactions
-                .extend(self.get_recursive_transaction_results(&hash.clone().into()).into_iter());
+                .extend(self.get_recursive_transaction_results(&(*hash).into()).into_iter());
         }
         transactions
     }
@@ -195,7 +195,7 @@ impl RuntimeUser {
                             Some(FinalExecutionStatus::SuccessValue(v.clone()))
                         }
                         ExecutionStatusView::SuccessReceiptId(id) => {
-                            looking_for_id = id.clone();
+                            looking_for_id = *id;
                             None
                         }
                     }
